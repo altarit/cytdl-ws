@@ -1,4 +1,4 @@
-const fs = require('fs')
+const fs = require('fs-extra')
 const server = require('http').createServer()
 const io = require('socket.io')(server)
 const youtubedl = require('youtube-dl')
@@ -14,6 +14,7 @@ const PREVIEW_STATUS = {
 
   PROCESSING: {id: 4, name: 'Processing...'},
   POSTPROCESSING: {id: 5, name: 'Postprocessing...'},
+  COMPLETED: {id: 10, name: 'Completed...'},
 
   FAILED_VALIDATION: {id: 20, name: 'Failed validation.'},
   FAILED_PREVIEW: {id: 21, name: 'Failed preview.'},
@@ -94,6 +95,7 @@ io.on('connection', function (client) {
             status: PREVIEW_STATUS.READY,
             requestId: requestId,
             format: chosenFormat,
+            thumbnail: info.thumbnail,
           }]
         })
       })
@@ -157,14 +159,22 @@ io.on('connection', function (client) {
       })
 
       const finalDirName = `media/${details.creator}`
-      const finalFilePath = `${finalDirName}/${details.filename}.${entry.format}`
+      const finalFilePath = `${finalDirName}/${details.title}.${entry.format}`
 
       if (!fs.existsSync(finalDirName)){
         fs.mkdirSync(finalDirName);
       }
-      fs.move(tempFilePath, finalFilePath)
+      fs.copy(tempFilePath, finalFilePath)
         .then(cb => {
-
+          client.emit('action', {
+            type: PREVIEW_SCREEN_PREVIEW_WS_UPDATE,
+            previews: [{
+              id: entry.id,
+              status: PREVIEW_STATUS.COMPLETED,
+              title: details.title,
+              href: finalFilePath,
+            }]
+          })
         })
         .catch(err => {
           client.emit('action', {
