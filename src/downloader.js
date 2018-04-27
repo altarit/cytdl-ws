@@ -25,7 +25,7 @@ module.exports.requestMetadata = (requestId, i, current) => new Promise((resolve
 
     if (!chosenFormat) {
       console.log(`Audio files not found`)
-      reject(`Audio files not found exception`)
+      reject(new Error(`Audio files not found exception`))
       return
     }
 
