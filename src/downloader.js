@@ -59,7 +59,7 @@ module.exports.requestProcessing = (entry, updateProgress) => new Promise((resol
     const now = Date.now()
     if (now - lastUpdate > 2000) {
       lastUpdate = now
-      updateProgress(PREVIEW_STATUS.PROCESSING, progress)
+      updateProgress(PREVIEW_STATUS.PROCESSING, `Processing...${progress}%`)
     }
   })
 
@@ -69,7 +69,7 @@ module.exports.requestProcessing = (entry, updateProgress) => new Promise((resol
 
   video.on('end', function () {
     console.log('end')
-    updateProgress(100, PREVIEW_STATUS.POSTPROCESSING)
+    updateProgress(PREVIEW_STATUS.POSTPROCESSING, `Processed. 100%`)
     const finalDirName = `media/${details.creator}`
     const finalFilePath = `${finalDirName}/${details.title}.${entry.format}`
 
@@ -85,7 +85,7 @@ module.exports.requestProcessing = (entry, updateProgress) => new Promise((resol
       .catch(err => {
 
         reject({
-          title: `Failed post`,
+          title: ``,
           status: PREVIEW_STATUS.FAILED_POSTPROCESSING
         })
       })

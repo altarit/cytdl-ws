@@ -24,7 +24,7 @@ io.on('connection', function (client) {
             type: PREVIEW_SCREEN_PREVIEW_WS_UPDATE,
             previews: [{
               id: i,
-              title: '...',
+              title: '',
               status: PREVIEW_STATUS.RECEIVING_METADATA,
               requestId: requestId,
             }]
@@ -47,14 +47,15 @@ io.on('connection', function (client) {
         })
         .catch(err => {
           console.log(err)
+          let statusText = err.statusText || err.message
           client.emit('action', {
             type: PREVIEW_SCREEN_PREVIEW_WS_UPDATE,
             previews: [{
               id: i,
-              title: 'ETPP',
-              author: 'EAPP',
+              title: '',
+              author: '',
               status: PREVIEW_STATUS.FAILED_PREVIEW,
-              statusText: err.statusText,
+              statusText: statusText,
               requestId: requestId,
             }]
           })
@@ -79,7 +80,7 @@ io.on('connection', function (client) {
         previews: [{
           id: entry.id,
           status: status,
-          title: `${progress}%`,
+          statusText: progress,
         }]
       })
     })
