@@ -30,20 +30,6 @@ io.on('connection', function (client) {
             }]
           })
         })
-        .catch(err => {
-          console.log(err)
-          client.emit('action', {
-            type: PREVIEW_SCREEN_PREVIEW_WS_UPDATE,
-            previews: [{
-              id: i,
-              title: 'ETPPPP',
-              author: 'EA',
-              status: PREVIEW_STATUS.FAILED_PREVIEW,
-              requestId: requestId,
-            }]
-          })
-          throw err
-        })
         .then(res => downloader.requestMetadata(requestId, i, current))
         .then(info => {
           client.emit('action', {
@@ -65,9 +51,10 @@ io.on('connection', function (client) {
             type: PREVIEW_SCREEN_PREVIEW_WS_UPDATE,
             previews: [{
               id: i,
-              title: 'ET',
-              author: 'EA',
+              title: 'ETPP',
+              author: 'EAPP',
               status: PREVIEW_STATUS.FAILED_PREVIEW,
+              statusText: err.statusText,
               requestId: requestId,
             }]
           })
@@ -122,6 +109,6 @@ io.on('connection', function (client) {
     console.log(`Disconnected ${client.id}`)
   })
 })
-server.listen(4000)
+server.listen(3500)
 console.log(`server started`)
 

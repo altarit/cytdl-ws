@@ -1,6 +1,7 @@
 const youtubedl = require('youtube-dl')
 const fs = require('fs-extra')
 const PREVIEW_STATUS = require('./previewStatus')
+const DownloaderError = require('./DownloaderError')
 
 const PATTERNS = [
   {
@@ -31,7 +32,7 @@ module.exports.checkPattern = (requestId, i, url, name) => Promise.resolve()
           return pattern.name
         }
       }
-      throw new Error(`Url ${url} doesn't match any patterns`)
+      throw new DownloaderError(`Url ${url} doesn't match any patterns`, `Invalid url`)
     }
   })
 
