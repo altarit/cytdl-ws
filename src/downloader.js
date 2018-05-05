@@ -2,8 +2,6 @@ const youtubedl = require('youtube-dl')
 const fs = require('fs-extra')
 const PREVIEW_STATUS = require('./previewStatus')
 
-
-
 module.exports.requestMetadata = (requestId, i, current) => new Promise((resolve, reject) => {
   let url = current
 

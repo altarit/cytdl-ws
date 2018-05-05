@@ -7,6 +7,14 @@ const PATTERNS = [
   {
     name: 'youtube-video',
     regexp: new RegExp('^https://www\.youtube\.com/watch\\?v=[A-Za-z0-9+/]{11}$')
+  },
+  {
+    name: 'bandcamp-video',
+    regexp: new RegExp('^https://(www\.)?[A-Za-z0-9]{1,40}\.bandcamp\.com/track/[A-Za-z0-9]{1,60}$')
+  },
+  {
+    name: 'bandcamp-album',
+    regexp: new RegExp('^https://(www\.)?[A-Za-z0-9]{1,40}\.bandcamp\.com/album/[A-Za-z0-9]{1,60}$')
   }
 ]
 
