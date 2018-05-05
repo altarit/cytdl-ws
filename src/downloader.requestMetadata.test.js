@@ -1,3 +1,5 @@
+let extractors = require('./infoExtractors')
+
 beforeEach(() => {
   jest.resetModules()
   jest.dontMock('./downloader')
@@ -36,9 +38,9 @@ test('Success requestMetadata mp3', async () => {
   }))
   const downloader = require('./downloader')
 
-  let result = await downloader.requestMetadata('rewrewr', 0, 'http://youtubeqwe.com/werwe')
+  let result = await downloader.requestMetadata('rewrewr', 0, 'http://youtubeqwe.com/werwe', {extractor: extractors.Youtube})
   expect(result.chosenFormat).toBe('mp3')
-  expect(result.creator).toBe('Rick Astley')
+  expect(result.author).toBe('Rick Astley')
 })
 
 test('Error at getting info', async () => {
@@ -79,7 +81,7 @@ test('Error: Audio files not found', async () => {
   const downloader = require('./downloader')
 
   try {
-    let result = await downloader.requestMetadata('rewrewr', 0, 'http://youtubeqwe.com/werwe')
+    let result = await downloader.requestMetadata('rewrewr', 0, 'http://youtubeqwe.com/werwe', {extractor: extractors.Youtube})
     throw new Error('Expected failure')
   } catch (e) {
     expect(e.message).toBe('Audio files not found exception')
