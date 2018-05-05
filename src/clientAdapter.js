@@ -49,14 +49,15 @@ class ClientAdapter {
     Promise.all(previews.map((current, i) => {
       validator.checkPattern(requestId, i, current)
         .then(type => {
-          this.metadataValidatedHandler(requestId, i, type)
-        })
-        .then(res => downloader.requestMetadata(requestId, i, current))
-        .then(info => {
-          this.metadataSuccessHandler(requestId, i, info)
-        })
-        .catch(err => {
-          this.metaDataErrorHandler(err, requestId, i)
+          this.metadataValidatedHandler(requestId, i, type.name)
+
+          return downloader.requestMetadata(requestId, i, current, type)
+            .then(info => {
+              this.metadataSuccessHandler(requestId, i, info)
+            })
+            .catch(err => {
+              this.metaDataErrorHandler(err, requestId, i)
+            })
         })
     }))
       .then(previews => {

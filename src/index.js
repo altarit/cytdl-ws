@@ -27,11 +27,17 @@ io.on('connection', function (client) {
         previews: [{
           id: i,
           title: info.title,
-          author: info.creator,
+          author: info.author,
           status: PREVIEW_STATUS.READY,
           requestId: requestId,
           format: info.chosenFormat,
           thumbnail: info.thumbnail,
+          children: info.children.map(el => Object.assign(el, {
+            status: PREVIEW_STATUS.READY,
+            requestId: requestId,
+            format: info.chosenFormat,
+            enabled: true,
+          })),
         }]
       })
     })

@@ -2,7 +2,7 @@ const youtubedl = require('youtube-dl')
 const fs = require('fs-extra')
 const PREVIEW_STATUS = require('./previewStatus')
 
-module.exports.requestMetadata = (requestId, i, current) => new Promise((resolve, reject) => {
+module.exports.requestMetadata = (requestId, i, current, type) => new Promise((resolve, reject) => {
   let url = current
 
   youtubedl.getInfo(url, [], (err, info) => {
@@ -10,25 +10,31 @@ module.exports.requestMetadata = (requestId, i, current) => new Promise((resolve
       reject(err)
       return
     }
-
     console.log(info)
 
-    let chosenFormat = null
-    for (let format of info.formats) {
-      if (['m4a', 'mp3'].indexOf(format.ext) !== -1) {
-        chosenFormat = format.ext
-        break
+    let result = type.extractor.extract(info, url)
+
+    console.log(result)
+
+    if (type.isMultiple) {
+      result.total = result.length
+    } else {
+      let chosenFormat = null
+      for (let format of info.formats) {
+        if (['m4a', 'mp3'].indexOf(format.ext) !== -1) {
+          chosenFormat = format.ext
+          break
+        }
       }
-    }
 
-    if (!chosenFormat) {
-      console.log(`Audio files not found`)
-      reject(new Error(`Audio files not found exception`))
-      return
+      if (!chosenFormat) {
+        console.log(`Audio files not found`)
+        reject(new Error(`Audio files not found exception`))
+        return
+      }
+      result.chosenFormat = chosenFormat
     }
-
-    info.chosenFormat = chosenFormat
-    resolve(info)
+    resolve(result)
   })
 })
 
