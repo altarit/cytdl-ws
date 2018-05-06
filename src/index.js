@@ -30,12 +30,13 @@ io.on('connection', function (client) {
           author: info.author,
           status: PREVIEW_STATUS.READY,
           requestId: requestId,
-          format: info.chosenFormat,
+          format: info.format,
           thumbnail: info.thumbnail,
           children: info.children.map(el => Object.assign(el, {
+            id: i,
             status: PREVIEW_STATUS.READY,
             requestId: requestId,
-            format: info.chosenFormat,
+            format: el.format,
             enabled: true,
           })),
         }]
@@ -61,6 +62,7 @@ io.on('connection', function (client) {
         type: PREVIEW_SCREEN_PREVIEW_WS_UPDATE,
         previews: [{
           id: entry.id,
+          subId: entry.subId,
           status: status,
           statusText: progress,
         }]
@@ -71,6 +73,7 @@ io.on('connection', function (client) {
         type: PREVIEW_SCREEN_PREVIEW_WS_UPDATE,
         previews: [{
           id: entry.id,
+          subId: entry.subId,
           status: PREVIEW_STATUS.COMPLETED,
           href: finalFilePath,
           title: entry.title,
@@ -84,6 +87,7 @@ io.on('connection', function (client) {
         type: PREVIEW_SCREEN_PREVIEW_WS_UPDATE,
         previews: [{
           id: entry.id,
+          subId: entry.subId,
           status: err.status || PREVIEW_STATUS.UNKNOWN_ERROR,
         }]
       })

@@ -1,4 +1,4 @@
-let extractors = require('./infoExtractors')
+let extractors = require('./extractors')
 
 beforeEach(() => {
   jest.resetModules()

@@ -20,8 +20,8 @@ const extractors = {
           author: entry.uploader,
           thumbnail: entry.thumbnail,
           url: entry.webpage_url,
-          id: i,
-          chosenFormat: 'm4a',
+          subId: i,
+          format: 'm4a',
         }
       })
       return {
@@ -55,8 +55,8 @@ const extractors = {
           author: entry.playlist_uploader_id,
           thumbnail: entry.thumbnail,
           url: entry.webpage_url,
-          id: i,
-          chosenFormat: 'mp3',
+          subId: i,
+          format: 'mp3',
         }
       })
       return {

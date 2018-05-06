@@ -32,7 +32,7 @@ module.exports.requestMetadata = (requestId, i, current, type) => new Promise((r
         reject(new Error(`Audio files not found exception`))
         return
       }
-      result.chosenFormat = chosenFormat
+      result.format = chosenFormat
     }
     resolve(result)
   })
