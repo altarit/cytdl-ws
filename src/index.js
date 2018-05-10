@@ -30,13 +30,13 @@ io.on('connection', function (client) {
           author: info.author,
           status: PREVIEW_STATUS.READY,
           requestId: requestId,
-          format: info.format,
+          formats: info.formats,
           thumbnail: info.thumbnail,
           children: info.children.map(el => Object.assign(el, {
             id: i,
             status: PREVIEW_STATUS.READY,
             requestId: requestId,
-            format: el.format,
+            formats: el.formats,
             enabled: true,
           })),
         }]

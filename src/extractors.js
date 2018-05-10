@@ -1,3 +1,15 @@
+function mapFormats(formats) {
+  return formats.map(el => {
+    return el
+    // return {
+    //   filesize: el.filesize,
+    //   ext: el.ext,
+    //   format_id: el.format_id,
+    //   format: el.format,
+    // }
+  })
+}
+
 const extractors = {
   Youtube: {
     extract(info, url) {
@@ -21,7 +33,7 @@ const extractors = {
           thumbnail: entry.thumbnail,
           url: entry.webpage_url,
           subId: i,
-          format: 'm4a',
+          formats: mapFormats(entry.formats),
         }
       })
       return {
@@ -56,7 +68,7 @@ const extractors = {
           thumbnail: entry.thumbnail,
           url: entry.webpage_url,
           subId: i,
-          format: 'mp3',
+          formats: mapFormats(entry.formats),
         }
       })
       return {
@@ -70,3 +82,4 @@ const extractors = {
 }
 
 module.exports = extractors
+module.exports.mapFormats = mapFormats

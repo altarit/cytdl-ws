@@ -1,6 +1,7 @@
 const youtubedl = require('youtube-dl')
 const fs = require('fs-extra')
 const PREVIEW_STATUS = require('./previewStatus')
+const mapFormats = require('./extractors').mapFormats
 
 module.exports.requestMetadata = (requestId, i, current, type) => new Promise((resolve, reject) => {
   let url = current
@@ -19,31 +20,18 @@ module.exports.requestMetadata = (requestId, i, current, type) => new Promise((r
     if (type.isMultiple) {
       result.total = result.length
     } else {
-      let chosenFormat = null
-      for (let format of info.formats) {
-        if (['m4a', 'mp3'].indexOf(format.ext) !== -1) {
-          chosenFormat = format.ext
-          break
-        }
-      }
-
-      if (!chosenFormat) {
-        console.log(`Audio files not found`)
-        reject(new Error(`Audio files not found exception`))
-        return
-      }
-      result.format = chosenFormat
+      result.formats = mapFormats(info.formats)
     }
     resolve(result)
   })
 })
 
 module.exports.requestProcessing = (entry, updateProgress) => new Promise((resolve, reject) => {
-  let video = youtubedl(entry.url, [`--format=${entry.format}`], {cwd: __dirname})
+  let video = youtubedl(entry.url, [`--format=${entry.format.format_id}`], {cwd: __dirname})
 
 
   const tempDirName = `temp/${entry.requestId}`
-  const tempFilePath = `${tempDirName}/${entry.id}.${entry.format}`
+  const tempFilePath = `${tempDirName}/${entry.id}.${entry.format.ext}`
 
   let size = 0
   let downloaded = 0
@@ -75,7 +63,7 @@ module.exports.requestProcessing = (entry, updateProgress) => new Promise((resol
     console.log('end')
     updateProgress(PREVIEW_STATUS.POSTPROCESSING, `Processed. 100%`)
     const finalDirName = `media/${details.creator}`
-    const finalFilePath = `${finalDirName}/${details.title}.${entry.format}`
+    const finalFilePath = `${finalDirName}/${details.title}.${entry.format.ext}`
 
     if (!fs.existsSync(finalDirName)) {
       fs.mkdirSync(finalDirName)
