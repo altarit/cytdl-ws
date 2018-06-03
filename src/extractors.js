@@ -1,12 +1,13 @@
 function mapFormats(formats) {
   return formats.map(el => {
-    return el
-    // return {
-    //   filesize: el.filesize,
-    //   ext: el.ext,
-    //   format_id: el.format_id,
-    //   format: el.format,
-    // }
+    //return el
+    return {
+      filesize: el.filesize,
+      ext: el.ext,
+      format_id: el.format_id,
+      format: el.format,
+      format_note: el.format_note,
+    }
   })
 }
 
