@@ -2,6 +2,7 @@ const server = require('http').createServer()
 const io = require('socket.io')(server)
 const ClientAdapter = require('./clientAdapter')
 const PREVIEW_STATUS = require('./previewStatus')
+const utils = require('./utils')
 
 const PREVIEW_SCREEN_PREVIEW_WS_UPDATE = 'PREVIEW_SCREEN_PREVIEW_WS_UPDATE'
 
@@ -96,7 +97,11 @@ io.on('connection', function (client) {
   client.on('request_metadata', function (data) {
     console.log(`Event from ${client.id}`)
     console.log(data)
-    let requestId = Math.random().toString(36).substring(7)
+    let requestIdStringPart = Math.random().toString(36).substring(0, 4)
+    let now = new Date()
+    let requestId = `${utils.pad(now.getMonth())}.${utils.pad(now.getDate())}-` +
+      `${utils.pad(now.getHours())}.${utils.pad(now.getMinutes())}.${utils.pad(now.getSeconds())}-` +
+      `${utils.pad(now.getMilliseconds(), 3)}-${requestIdStringPart}`
     adapter.init(requestId, data.previews)
   })
 
