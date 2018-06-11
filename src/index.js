@@ -1,117 +1,48 @@
 const server = require('http').createServer()
 const io = require('socket.io')(server)
-const ClientAdapter = require('./clientAdapter')
-const PREVIEW_STATUS = require('./previewStatus')
 const utils = require('./utils')
-
-const PREVIEW_SCREEN_PREVIEW_WS_UPDATE = 'PREVIEW_SCREEN_PREVIEW_WS_UPDATE'
-
+const SocketAdapter = require('./SocketAdapter')
 
 io.on('connection', function (client) {
   console.log(`Connected ${client.id}`)
 
-  let adapter = new ClientAdapter()
-    .onMetadataValidated((requestId, i, type) => {
-      client.emit('action', {
-        type: PREVIEW_SCREEN_PREVIEW_WS_UPDATE,
-        previews: [{
-          id: i,
-          title: '',
-          status: PREVIEW_STATUS.RECEIVING_METADATA,
-          requestId: requestId,
-        }]
-      })
-    })
-    .onMetadataSuccess((requestId, i, info) => {
-      client.emit('action', {
-        type: PREVIEW_SCREEN_PREVIEW_WS_UPDATE,
-        previews: [{
-          id: i,
-          title: info.title,
-          author: info.author,
-          status: PREVIEW_STATUS.READY,
-          requestId: requestId,
-          formats: info.formats,
-          thumbnail: info.thumbnail,
-          children: info.children ? info.children.map(el => Object.assign(el, {
-            id: i,
-            status: PREVIEW_STATUS.READY,
-            requestId: requestId,
-            formats: el.formats,
-            enabled: true,
-          })) : null,
-        }]
-      })
-    })
-    .onMetadataError((err, requestId, i) => {
-      console.log(err)
-      let statusText = err.statusText || err.message
-      client.emit('action', {
-        type: PREVIEW_SCREEN_PREVIEW_WS_UPDATE,
-        previews: [{
-          id: i,
-          title: '',
-          author: '',
-          status: PREVIEW_STATUS.FAILED_PREVIEW,
-          statusText: statusText,
-          requestId: requestId,
-        }]
-      })
-    })
-    .onProcessingProgress((entry, status, progress) => {
-      client.emit('action', {
-        type: PREVIEW_SCREEN_PREVIEW_WS_UPDATE,
-        previews: [{
-          id: entry.id,
-          subId: entry.subId,
-          status: status,
-          statusText: progress,
-        }]
-      })
-    })
-    .onProcessingSuccess((entry, finalFilePath) => {
-      client.emit('action', {
-        type: PREVIEW_SCREEN_PREVIEW_WS_UPDATE,
-        previews: [{
-          id: entry.id,
-          subId: entry.subId,
-          status: PREVIEW_STATUS.COMPLETED,
-          href: finalFilePath,
-          title: entry.title,
-        }]
-      })
-    })
-    .onProcessingError((err, entry) => {
-      console.log(`Err: ${err.message}`)
-      console.log(err)
-      client.emit('action', {
-        type: PREVIEW_SCREEN_PREVIEW_WS_UPDATE,
-        previews: [{
-          id: entry.id,
-          subId: entry.subId,
-          status: err.status || PREVIEW_STATUS.UNKNOWN_ERROR,
-        }]
-      })
-    })
+  const local = {
+    socketAdapter: null
+  }
 
   client.on('request_metadata', function (data) {
     console.log(`Event from ${client.id}`)
     console.log(data)
-    let requestIdStringPart = Math.random().toString(36).substring(0, 4)
+    let requestIdStringPart = Math.random().toString(36).substring(2, 6)
     let now = new Date()
     let requestId = `${utils.pad(now.getMonth())}.${utils.pad(now.getDate())}-` +
       `${utils.pad(now.getHours())}.${utils.pad(now.getMinutes())}.${utils.pad(now.getSeconds())}-` +
       `${utils.pad(now.getMilliseconds(), 3)}-${requestIdStringPart}`
-    adapter.init(requestId, data.previews)
+
+
+    if (local.socketAdapter) {
+      local.socketAdapter.deactivate()
+    }
+
+    local.socketAdapter = new SocketAdapter(client, requestId, data.previews)
+    local.socketAdapter.requestMetadata()
   })
 
   client.on('request_downloading', function (preview) {
     console.log(preview)
-    adapter.requestProcessing(preview.entry)
+
+    if (local.socketAdapter) {
+      local.socketAdapter.requestProcessing(preview.entry)
+    } else {
+      console.error(`There's no socketAdapter.`)
+    }
   })
 
   client.on('disconnect', function () {
     console.log(`Disconnected ${client.id}`)
+    if (local.socketAdapter) {
+      local.socketAdapter.deactivate()
+    }
   })
 })
 server.listen(3500)
