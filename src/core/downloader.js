@@ -1,7 +1,6 @@
 const youtubedl = require('youtube-dl')
 const fs = require('fs-extra')
 const PREVIEW_STATUS = require('../constants/previewStatus')
-const mapFormats = require('../extractors/extractors').mapFormats
 
 module.exports.requestMetadata = (requestId, i, current, type) => new Promise((resolve, reject) => {
   let url = current
@@ -11,17 +10,11 @@ module.exports.requestMetadata = (requestId, i, current, type) => new Promise((r
       reject(err)
       return
     }
-    console.log(info)
 
-    let result = type.extractor.extract(info, url)
+    //console.log(info)
+    let result = type.extract(info, url)
+    //console.log(result)
 
-    console.log(result)
-
-    if (type.isMultiple) {
-      result.total = result.length
-    } else {
-      result.formats = mapFormats(info.formats)
-    }
     resolve(result)
   })
 })

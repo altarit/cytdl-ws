@@ -1,59 +1,41 @@
-const youtubedl = require('youtube-dl')
-const fs = require('fs-extra')
-const PREVIEW_STATUS = require('../constants/previewStatus')
 const DownloaderError = require('../errors/DownloaderError')
-const extractors = require('./extractors')
 
-const PATTERNS = [
-  {
-    name: 'youtube-video',
-    regexp: new RegExp('^https://www\.youtube\.com/watch\\?v=[A-Za-z0-9+/]{11}$'),
-    isMultiple: false,
-    extractor: extractors.Youtube,
-  },
-  {
-    name: 'youtube-playlist',
-    regexp: new RegExp('^https://www\.youtube\.com/playlist\\?list=[A-Za-z0-9+/_\\-]{20,40}$'),
-    isMultiple: true,
-    extractor: extractors.YoutubeList,
-  },
-  {
-    name: 'bandcamp-track',
-    regexp: new RegExp('^https://([A-Za-z0-9]{1,40})\.bandcamp\.com/track/[A-Za-z0-9\\-]{1,60}$'),
-    isMultiple: false,
-    extractor: extractors.Bandcamp,
-  },
-  {
-    name: 'bandcamp-album',
-    regexp: new RegExp('^https://([A-Za-z0-9]{1,40})\.bandcamp\.com/album/[A-Za-z0-9]{1,60}$'),
-    isMultiple: true,
-    extractor: extractors.BandcampAlbum,
-  }
-]
+const Youtube = require('./impl/Youtube')
+const YoutubeList = require('./impl/YoutubeList')
+const Bandcamp = require('./impl/Bandcamp')
+const BandcampList = require('./impl/BandcampList')
+
+const PATTERNS_ARRAY = [Youtube, YoutubeList, Bandcamp, BandcampList]
 
 const PATTERNS_MAP = {}
-for (let pattern of PATTERNS) {
+for (let pattern of PATTERNS_ARRAY) {
   PATTERNS_MAP[pattern.name] = pattern
 }
 
-module.exports.checkPattern = (requestId, i, url, name) => Promise.resolve()
+module.exports.getExtractorByNameAndCheck = (url, name) => Promise.resolve()
   .then(() => {
-    if (name) {
-      let pattern = PATTERNS_MAP[name]
-      if (!pattern) {
-        throw new Error(`Pattern ${name} not found`)
-      }
-      if (pattern.regexp.test(url)) {
-        return pattern
-      }
-      throw new Error(`Url ${url} doesn't match ${name} pattern`)
-    } else {
-      for (let pattern of PATTERNS) {
-        if (pattern.regexp.test(url)) {
-          return pattern
-        }
-      }
-      throw new DownloaderError(`Url ${url} doesn't match any patterns`, `Invalid url`)
+    if (!name) {
+      throw new Error(`Parameter name is empty`)
     }
+
+    let extractor = PATTERNS_MAP[name]
+    if (!extractor) {
+      throw new Error(`Extractor ${name} not found`)
+    }
+    if (extractor.regexp.test(url)) {
+      return pattern
+    }
+    throw new Error(`Url ${url} doesn't match ${name} pattern`)
+
+  })
+
+module.exports.getExtractorByUrl = (url) => Promise.resolve()
+  .then(() => {
+    for (let extractor of PATTERNS_ARRAY) {
+      if (extractor.regexp.test(url)) {
+        return extractor
+      }
+    }
+    throw new DownloaderError(`Url ${url} doesn't match any patterns`, `Invalid url`)
   })
 

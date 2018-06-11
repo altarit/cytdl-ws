@@ -8,7 +8,7 @@ class DownloaderFacade {
 
   requestMetadata(requestId, previews) {
     Promise.all(previews.map((current, i) => {
-      validator.checkPattern(requestId, i, current)
+      validator.getExtractorByUrl(current)
         .then(type => {
           this.socketAdapter.onMetadataValidated(requestId, i, type.name)
 
