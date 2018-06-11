@@ -1,7 +1,7 @@
 const server = require('http').createServer()
 const io = require('socket.io')(server)
-const utils = require('./utils')
-const SocketAdapter = require('./SocketAdapter')
+const utils = require('./utils/utils')
+const SocketAdapter = require('./network/SocketAdapter')
 
 io.on('connection', function (client) {
   console.log(`Connected ${client.id}`)

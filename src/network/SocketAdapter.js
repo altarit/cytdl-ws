@@ -1,7 +1,7 @@
-const downloader = require('./downloader')
-const validator = require('./validator')
-const DownloaderFacade = require('./DownloaderFacade')
-const PREVIEW_STATUS = require('./previewStatus')
+const downloader = require('../core/downloader')
+const validator = require('../extractors/validator')
+const DownloaderFacade = require('../core/DownloaderFacade')
+const PREVIEW_STATUS = require('../constants/previewStatus')
 
 
 const PREVIEW_SCREEN_PREVIEW_WS_UPDATE = 'PREVIEW_SCREEN_PREVIEW_WS_UPDATE'

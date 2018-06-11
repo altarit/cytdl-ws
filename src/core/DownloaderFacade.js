@@ -1,5 +1,5 @@
 const downloader = require('./downloader')
-const validator = require('./validator')
+const validator = require('../extractors/validator')
 
 class DownloaderFacade {
   constructor(socketAdapter) {

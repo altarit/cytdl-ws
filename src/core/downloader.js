@@ -1,7 +1,7 @@
 const youtubedl = require('youtube-dl')
 const fs = require('fs-extra')
-const PREVIEW_STATUS = require('./previewStatus')
-const mapFormats = require('./extractors').mapFormats
+const PREVIEW_STATUS = require('../constants/previewStatus')
+const mapFormats = require('../extractors/extractors').mapFormats
 
 module.exports.requestMetadata = (requestId, i, current, type) => new Promise((resolve, reject) => {
   let url = current

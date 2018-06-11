@@ -1,7 +1,7 @@
 const youtubedl = require('youtube-dl')
 const fs = require('fs-extra')
-const PREVIEW_STATUS = require('./previewStatus')
-const DownloaderError = require('./DownloaderError')
+const PREVIEW_STATUS = require('../constants/previewStatus')
+const DownloaderError = require('../errors/DownloaderError')
 const extractors = require('./extractors')
 
 const PATTERNS = [
