@@ -7,24 +7,24 @@ io.on('connection', function (client) {
   console.log(`Connected ${client.id}`)
 
   const local = {
-    socketAdapter: null
+    socketAdapter: null,
+    requestId: null,
   }
 
   client.on('request_metadata', function (data) {
     console.log(`Event from ${client.id}`)
     console.log(data)
-    let requestIdStringPart = Math.random().toString(36).substring(2, 6)
-    let now = new Date()
-    let requestId = `${utils.pad(now.getMonth())}.${utils.pad(now.getDate())}-` +
+    const requestIdStringPart = Math.random().toString(36).substring(2, 6)
+    const now = new Date()
+    local.requestId = `${utils.pad(now.getMonth())}.${utils.pad(now.getDate())}-` +
       `${utils.pad(now.getHours())}.${utils.pad(now.getMinutes())}.${utils.pad(now.getSeconds())}-` +
       `${utils.pad(now.getMilliseconds(), 3)}-${requestIdStringPart}`
-
 
     if (local.socketAdapter) {
       local.socketAdapter.deactivate()
     }
 
-    local.socketAdapter = new SocketAdapter(client, requestId, data.previews)
+    local.socketAdapter = new SocketAdapter(client, local.requestId, data.previews)
     local.socketAdapter.requestMetadata()
   })
 
@@ -36,6 +36,10 @@ io.on('connection', function (client) {
     } else {
       console.error(`There's no socketAdapter.`)
     }
+  })
+
+  client.on('request_archiving', function (previews) {
+    local.socketAdapter.requestArchiving(local.requestId, previews)
   })
 
   client.on('disconnect', function () {

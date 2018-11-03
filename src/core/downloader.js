@@ -1,6 +1,7 @@
 const youtubedl = require('youtube-dl')
 const fs = require('fs-extra')
 const PREVIEW_STATUS = require('../constants/previewStatus')
+const {mkdirs} = require('../utils/utils')
 
 module.exports.requestMetadata = (requestId, i, current, type) => new Promise((resolve, reject) => {
   let url = current
@@ -13,7 +14,12 @@ module.exports.requestMetadata = (requestId, i, current, type) => new Promise((r
 
     //console.log(info)
     let result = type.extract(info, url)
-    //console.log(result)
+
+    if (!result.title || !result.author) {
+      console.log(result)
+      result.author = 'qwe'
+      //throw new Error('Missed video info properties.')
+    }
 
     resolve(result)
   })
@@ -22,9 +28,11 @@ module.exports.requestMetadata = (requestId, i, current, type) => new Promise((r
 module.exports.requestProcessing = (entry, updateProgress) => new Promise((resolve, reject) => {
   let video = youtubedl(entry.url, [`--format=${entry.format.format_id}`], {cwd: __dirname})
 
-
-  const tempDirName = `temp/${entry.requestId}`
+  const tempDirName = mkdirs(`temp/`, entry.requestId)
   const tempFilePath = `${tempDirName}/${entry.id}.${entry.format.ext}`
+
+  const finalDirName = mkdirs(`media/`, entry.author)
+  const finalFilePath = `${finalDirName}/${entry.title}[${entry.format.format_id}].${entry.format.ext}`
 
   let size = 0
   let downloaded = 0
@@ -55,12 +63,7 @@ module.exports.requestProcessing = (entry, updateProgress) => new Promise((resol
   video.on('end', function () {
     console.log('end')
     updateProgress(PREVIEW_STATUS.POSTPROCESSING, `Processed. 100%`)
-    const finalDirName = `media/${details.creator}`
-    const finalFilePath = `${finalDirName}/${details.title}.${entry.format.ext}`
 
-    if (!fs.existsSync(finalDirName)) {
-      fs.mkdirSync(finalDirName)
-    }
     fs.copy(tempFilePath, finalFilePath)
       .then(cb => {
         resolve({
@@ -76,8 +79,5 @@ module.exports.requestProcessing = (entry, updateProgress) => new Promise((resol
       })
   })
 
-  if (!fs.existsSync(tempDirName)) {
-    fs.mkdirSync(tempDirName)
-  }
   video.pipe(fs.createWriteStream(tempFilePath))
 })

@@ -1,6 +1,7 @@
-const downloader = require('../core/downloader')
-const validator = require('../extractors/validator')
+// const downloader = require('../core/downloader')
+// const validator = require('../extractors/validator')
 const DownloaderFacade = require('../core/DownloaderFacade')
+const ArchiverFacade = require('../core/ArchiverFacade')
 const PREVIEW_STATUS = require('../constants/previewStatus')
 
 
@@ -15,7 +16,7 @@ class SocketAdapter {
 
     const self = this
 
-    this.downloaderFacade = new DownloaderFacade(new Proxy(this, {
+    const proxy = new Proxy(this, {
       get(target, propKey, receiver) {
         console.log(`Callback ${propKey} was intercepted for ${requestId}`)
 
@@ -29,11 +30,15 @@ class SocketAdapter {
 
         const origMethod = target[propKey]
         return (requestId, ...args) => {
-          let result = origMethod.apply(self, args)
+          const result = origMethod.apply(self, args)
           return result
         }
       }
-    }))
+    })
+
+    this.downloaderFacade = new DownloaderFacade(proxy)
+
+    this.archiverFacade = new ArchiverFacade(proxy)
   }
 
   requestMetadata() {
@@ -42,6 +47,10 @@ class SocketAdapter {
 
   requestProcessing(entry) {
     this.downloaderFacade.requestProcessing(this.requestId, entry)
+  }
+
+  requestArchiving(entries) {
+    this.archiverFacade.requestArchiving(this.requestId, entries)
   }
 
   deactivate() {
@@ -134,6 +143,13 @@ class SocketAdapter {
         subId: entry.subId,
         status: err.status || PREVIEW_STATUS.UNKNOWN_ERROR,
       }]
+    })
+  }
+
+  onArchivingSuccess(entry, finalFilePath) {
+    this.client.emit('action', {
+      type: PREVIEW_SCREEN_PREVIEW_WS_UPDATE,
+
     })
   }
 }
