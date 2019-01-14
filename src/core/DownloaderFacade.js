@@ -8,7 +8,7 @@ class DownloaderFacade {
 
   requestMetadata(requestId, previews) {
     Promise.all(previews.map((current, i) => {
-      validator.getExtractorByUrl(current)
+      return validator.getExtractorByUrl(current)
         .then(type => {
           this.socketAdapter.onMetadataValidated(requestId, i, type.name)
 
@@ -22,11 +22,10 @@ class DownloaderFacade {
         })
     }))
       .then(previews => {
-        console.log(`All metadata has been reveived.`)
+        console.log(`All metadata have been reviewed.`)
       })
       .catch(err => {
-        console.log(`Error at receiving metadata`)
-        console.log(err)
+        console.log(`Error at receiving metadata.`, err)
       })
   }
 

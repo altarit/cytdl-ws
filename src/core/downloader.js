@@ -1,7 +1,8 @@
 const youtubedl = require('youtube-dl')
 const fs = require('fs-extra')
 const PREVIEW_STATUS = require('../constants/previewStatus')
-const {mkdirs} = require('../utils/utils')
+const { mkdirs, encodeDangerousFilePath } = require('../utils/utils')
+const rootDir = __dirname
 
 module.exports.requestMetadata = (requestId, i, current, type) => new Promise((resolve, reject) => {
   let url = current
@@ -13,11 +14,11 @@ module.exports.requestMetadata = (requestId, i, current, type) => new Promise((r
     }
 
     //console.log(info)
-    let result = type.extract(info, url)
+    const result = type.extract(info, url)
 
     if (!result.title || !result.author) {
-      console.log(result)
-      result.author = 'qwe'
+      //console.log(result)
+      result.author = 'Unknown author'
       //throw new Error('Missed video info properties.')
     }
 
@@ -25,59 +26,105 @@ module.exports.requestMetadata = (requestId, i, current, type) => new Promise((r
   })
 })
 
-module.exports.requestProcessing = (entry, updateProgress) => new Promise((resolve, reject) => {
-  let video = youtubedl(entry.url, [`--format=${entry.format.format_id}`], {cwd: __dirname})
+module.exports.requestProcessing = (entry, updateProgress) => {
+  const rootDirName = mkdirs(`media`, encodeDangerousFilePath(entry.requestId))
+  const tempDirName = mkdirs(rootDirName, 'temp')
+  const tempFilePath = `${tempDirName}/${entry.id}-${entry.subId || ''}.${entry.format && entry.format.ext || 'unknown'}`
 
-  const tempDirName = mkdirs(`temp/`, entry.requestId)
-  const tempFilePath = `${tempDirName}/${entry.id}.${entry.format.ext}`
+  //const finalDirName = mkdirs(`media/loaded/`, encodeDangerousFilePath(entry.author))
+  const finalDirName = mkdirs(rootDirName, 'media')
+  const finalFilePath = `${finalDirName}/` +
+    `${encodeDangerousFilePath(entry.title)}[${entry.format.format_id}].${entry.format.ext}`
 
-  const finalDirName = mkdirs(`media/`, entry.author)
-  const finalFilePath = `${finalDirName}/${entry.title}[${entry.format.format_id}].${entry.format.ext}`
+  if (!entry.format.special) {
+    return processWrapped(tempFilePath, finalFilePath, entry.url, entry.format, updateProgress)
+  } else {
+    return processNative(tempFilePath, finalFilePath, entry.url, entry.format, updateProgress)
+  }
+}
 
-  let size = 0
-  let downloaded = 0
-  let lastUpdate = 0
-  let details = null
+function processWrapped (tempFilePath, finalFilePath, url, format, updateProgress) {
+  return new Promise((resolve, reject) => {
+    const video = youtubedl(url, [`--format=${format.format_id}`], { cwd: rootDir })
 
-  video.on('info', function (info) {
-    console.log('size: ' + info.size)
-    size = info.size
-    details = info
-  })
+    let size = 0
+    let downloaded = 0
+    let lastUpdate = 0
+    let details = null
 
-  video.on('data', function (chunk) {
-    downloaded += chunk.length
-    let progress = Math.round(100 * downloaded / size)
+    video.on('info', function (info) {
+      console.log('size: ' + info.size)
+      size = info.size
+      details = info
+    })
 
-    const now = Date.now()
-    if (now - lastUpdate > 2000) {
-      lastUpdate = now
-      updateProgress(PREVIEW_STATUS.PROCESSING, `Processing...${progress}%`)
-    }
-  })
+    video.on('data', function (chunk) {
+      downloaded += chunk.length
+      const progress = Math.round(100 * downloaded / size)
 
-  video.on('complete', function (info) {
-    console.log('complete')
-  })
+      const now = Date.now()
+      if (now - lastUpdate > 2000) {
+        lastUpdate = now
+        updateProgress(PREVIEW_STATUS.PROCESSING, `Processing...${progress}%`)
+      }
+    })
 
-  video.on('end', function () {
-    console.log('end')
-    updateProgress(PREVIEW_STATUS.POSTPROCESSING, `Processed. 100%`)
+    video.on('complete', function (info) {
+      console.log('complete')
+    })
 
-    fs.copy(tempFilePath, finalFilePath)
-      .then(cb => {
-        resolve({
-          finalFilePath: finalFilePath
+    video.on('end', function () {
+      console.log('end')
+      updateProgress(PREVIEW_STATUS.POSTPROCESSING, `Processed. 100%`)
+
+      fs.copy(tempFilePath, finalFilePath)
+        .then(cb => {
+          resolve({
+            finalFilePath: finalFilePath
+          })
         })
-      })
-      .catch(err => {
+        .catch(err => {
+          console.error(`Error at moving a file.`, err)
+          reject({
+            title: ``,
+            status: PREVIEW_STATUS.FAILED_POSTPROCESSING
+          })
+        })
+    })
 
+    video.pipe(fs.createWriteStream(tempFilePath))
+  })
+}
+
+function processNative (tempFilePath, finalFilePath, url, format, updateProgress) {
+  updateProgress(PREVIEW_STATUS.PROCESSING, `Processing... Please wait.`)
+
+  return new Promise((resolve, reject) => {
+    youtubedl.exec(url, ['-x', '--audio-format', format.ext, '-o', tempFilePath], {}, function(err, output) {
+      if (err) {
         reject({
           title: ``,
           status: PREVIEW_STATUS.FAILED_POSTPROCESSING
         })
-      })
-  })
+        return
+      }
 
-  video.pipe(fs.createWriteStream(tempFilePath))
-})
+      //console.log(output.join('\n'));
+      updateProgress(PREVIEW_STATUS.PROCESSING, `Processing...${100}%`)
+
+      fs.copy(tempFilePath, finalFilePath)
+        .then(cb => {
+          resolve({
+            finalFilePath: finalFilePath
+          })
+        })
+        .catch(err => {
+          console.error(`Error at moving a file.`, err)
+          reject({
+            title: ``,
+            status: PREVIEW_STATUS.FAILED_POSTPROCESSING
+          })
+        })
+    });
+  })
+}
