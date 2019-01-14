@@ -6,6 +6,7 @@ const PREVIEW_STATUS = require('../constants/previewStatus')
 
 
 const PREVIEW_SCREEN_PREVIEW_WS_UPDATE = 'PREVIEW_SCREEN_PREVIEW_WS_UPDATE'
+const PREVIEW_SCREEN_PREVIEW_HEADER_UPDATE = 'PREVIEW_SCREEN_PREVIEW_HEADER_UPDATE'
 
 class SocketAdapter {
   constructor(client, requestId, previews) {
@@ -93,7 +94,7 @@ class SocketAdapter {
   }
 
   onMetadataError(err, i) {
-    console.log(err)
+    console.error(`onMetadataError:`, err)
     let statusText = err.statusText || err.message
     this.client.emit('action', {
       type: PREVIEW_SCREEN_PREVIEW_WS_UPDATE,
@@ -134,8 +135,7 @@ class SocketAdapter {
   }
 
   onProcessingError(err, entry) {
-    console.log(`Err: ${err.message}`)
-    console.log(err)
+    console.error(`onProcessingError: ${err.message}`, err)
     this.client.emit('action', {
       type: PREVIEW_SCREEN_PREVIEW_WS_UPDATE,
       previews: [{
@@ -146,10 +146,20 @@ class SocketAdapter {
     })
   }
 
-  onArchivingSuccess(entry, finalFilePath) {
+  onArchivingSuccess(requestId, finalFilePath) {
     this.client.emit('action', {
-      type: PREVIEW_SCREEN_PREVIEW_WS_UPDATE,
+      type: PREVIEW_SCREEN_PREVIEW_HEADER_UPDATE,
+      requestId: requestId,
+      finalFilePath: finalFilePath,
+      completed: true,
+    })
+  }
 
+  onArchivingError(entry, err) {
+    this.client.emit('action', {
+      type: PREVIEW_SCREEN_PREVIEW_HEADER_UPDATE,
+      completed: false,
+      err: err,
     })
   }
 }

@@ -1,5 +1,7 @@
 const server = require('http').createServer()
 const io = require('socket.io')(server)
+
+const log = require('./lib/log').prepareLogger('cytdl.js')
 const utils = require('./utils/utils')
 const SocketAdapter = require('./network/SocketAdapter')
 
@@ -13,33 +15,26 @@ io.on('connection', function (client) {
 
   client.on('request_metadata', function (data) {
     console.log(`Event from ${client.id}`)
-    console.log(data)
-    const requestIdStringPart = Math.random().toString(36).substring(2, 6)
-    const now = new Date()
-    local.requestId = `${utils.pad(now.getMonth())}.${utils.pad(now.getDate())}-` +
-      `${utils.pad(now.getHours())}.${utils.pad(now.getMinutes())}.${utils.pad(now.getSeconds())}-` +
-      `${utils.pad(now.getMilliseconds(), 3)}-${requestIdStringPart}`
+    local.requestId = utils.generateDateId()
 
     if (local.socketAdapter) {
       local.socketAdapter.deactivate()
     }
 
-    local.socketAdapter = new SocketAdapter(client, local.requestId, data.previews)
+    local.socketAdapter = new SocketAdapter(client, local.requestId, data && data.previews)
     local.socketAdapter.requestMetadata()
   })
 
   client.on('request_downloading', function (preview) {
-    console.log(preview)
-
     if (local.socketAdapter) {
-      local.socketAdapter.requestProcessing(preview.entry)
+      local.socketAdapter.requestProcessing(preview && preview.entry)
     } else {
       console.error(`There's no socketAdapter.`)
     }
   })
 
   client.on('request_archiving', function (previews) {
-    local.socketAdapter.requestArchiving(local.requestId, previews)
+    local.socketAdapter.requestArchiving(previews && previews.entries)
   })
 
   client.on('disconnect', function () {
